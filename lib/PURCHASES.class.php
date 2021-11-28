@@ -210,7 +210,7 @@ private $db;            // database object
         return $result;
     }
 
-    private function SavePDAttachments($ticketid, $messageid, $files, $cleanup = false)
+    private function SavePDAttachments($messageid, $files, $cleanup = false)
     {
         $pd_dir = ConfigHelper::getConfig('pd.mail_dir', STORAGE_DIR . DIRECTORY_SEPARATOR . 'pd');
         $storage_dir_permission = intval(ConfigHelper::getConfig('storage.dir_permission', ConfigHelper::getConfig('pd.mail_dir_permission', '0700')), 8);
@@ -218,14 +218,10 @@ private $db;            // database object
         $storage_dir_ownergid = ConfigHelper::getConfig('storage.dir_ownergid', 'root');
 
         if (!empty($files) && $pd_dir) {
-            $ticket_dir = $pd_dir . DIRECTORY_SEPARATOR . sprintf('%06d', $ticketid);
-            $message_dir = $ticket_dir . DIRECTORY_SEPARATOR . sprintf('%06d', $messageid);
+            $message_dir = $pd_dir . DIRECTORY_SEPARATOR . sprintf('%06d', $messageid);
 
             @umask(0007);
 
-            @mkdir($ticket_dir, $storage_dir_permission);
-            @chown($ticket_dir, $storage_dir_owneruid);
-            @chgrp($ticket_dir, $storage_dir_ownergid);
             @mkdir($message_dir, $storage_dir_permission);
             @chown($message_dir, $storage_dir_owneruid);
             @chgrp($message_dir, $storage_dir_ownergid);
@@ -298,7 +294,9 @@ private $db;            // database object
             $this->SetAssignedProjects($params);
         }
 
-        $this->SavePDAttachments($params['pdid'], $params['pdid'], $files);
+        $pdid = $this->db->GetLastInsertID('pds');
+
+        $this->SavePDAttachments($pdid, $files);
 
         return $result;
     }
